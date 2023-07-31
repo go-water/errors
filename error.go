@@ -3,6 +3,7 @@ package errors
 import (
 	stderrors "errors"
 	"fmt"
+	"strings"
 )
 
 type Err struct {
@@ -38,6 +39,14 @@ func (e *Err) SetLocation(callDepth int) {
 
 func (e *Err) StackTrace() []string {
 	return errorStack(e)
+}
+
+func (e *Err) ErrorType() string {
+	if e == nil || len(e.code) == 0 {
+		return ""
+	}
+
+	return strings.Split(e.code, ".")[0]
 }
 
 func Unwrap(err error) error {

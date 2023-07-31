@@ -70,13 +70,11 @@ func errorStack(err error) []string {
 		list = append(list, er)
 	}
 
-	// We want the first error first
 	var lines []string
 	for _, e := range list {
 		var buff []byte
 		if err, ok := e.(Locationer); ok {
 			file, line := err.Location()
-			// Strip off the leading GOPATH/src path elements.
 			if file != "" {
 				buff = append(buff, fmt.Sprintf("%s:%d", file, line)...)
 				buff = append(buff, ": "...)
@@ -103,12 +101,39 @@ func errorStack(err error) []string {
 		}
 	}
 
-	// reverse the lines to get the original error, which was at the end of
-	// the list, back to the start.
 	var result []string
 	for i := len(lines); i > 0; i-- {
 		result = append(result, lines[i-1])
 	}
 
 	return result
+}
+
+func ErrorWithModelFieldReason(t string, model string, field string, reason string) error {
+	parts := []string{t}
+	if len(model) > 0 {
+		parts = append(parts, model)
+	}
+	if len(field) > 0 {
+		parts = append(parts, field)
+	}
+	if len(reason) > 0 {
+		parts = append(parts, reason)
+	}
+
+	code := strings.Join(parts, ".")
+
+	err := New(code, "").(*Err)
+	err.SetLocation(2)
+	return err
+}
+
+func ExternalError(other error, code string) error {
+	if other == nil {
+		return nil
+	}
+
+	err := New(code, other.Error()).(*Err)
+	err.SetLocation(2)
+	return err
 }
